@@ -1,0 +1,102 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item.html">
+
+
+<dom-module id="language-component">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <iron-ajax
+                id="json"
+                handle-as="json"
+                on-response="_getLanguage"
+                on-error="_errorResponse"
+                debounce-duration="300">
+        </iron-ajax>
+        <paper-dropdown-menu label="Idioma" no-animations on-selected-item-changed="_langSelected">
+            <paper-listbox slot="dropdown-content" selected="1" attr-for-selected="data-lang">
+                <paper-item data-lang="es">Español</paper-item>
+                <paper-item data-lang="en">English</paper-item>
+            </paper-listbox>
+        </paper-dropdown-menu>
+    </template>
+
+    <script>
+        /**
+         * `language-component`
+         *
+         *
+         * @customElement
+         * @polymer
+         * @demo demo/index.html
+         */
+        class LanguageComponent extends Polymer.Element {
+            static get is() {
+                return 'language-component';
+            }
+
+            static get properties() {
+                return {
+                    source: {
+                        type: String,
+                        value: '',
+                        observer: '_requestLanguage'
+                    },
+                    lang: {
+                        type: String,
+                        value: 'es',
+                        observer: '_langChanged'
+                    },
+                    locales: {
+                        type: Object,
+                        value: {}
+                    }
+                };
+            }
+
+            _langChanged() {
+                this._requestLanguage();
+            }
+
+            _langSelected(event) {
+                const paperItem = event.detail.value;
+                if (paperItem) {
+                    const languageKey = paperItem.getAttribute('data-lang');
+                    this.set('lang', languageKey);
+                }
+            }
+
+            _requestLanguage() {
+                this.$.json.url = `${this.source}/${this.lang}.json`;
+                this.$.json.generateRequest();
+            }
+
+            _getLanguage() {
+                const response = this.$.json.lastResponse;
+                this.set(['locales', this.lang], response);
+                if (this.locales[this.lang]) {
+                    this.dispatchEvent(new CustomEvent('language-changed', {
+                        bubbles: false,
+                        composed: false,
+                        detail: {
+                            lang: this.lang,
+                            data: this.locales[this.lang]
+                        }
+                    }));
+                }
+            }
+
+            _errorResponse() {
+                const error = this.$.json.lastError;
+            }
+        }
+
+        window.customElements.define(LanguageComponent.is, LanguageComponent);
+    </script>
+</dom-module>
