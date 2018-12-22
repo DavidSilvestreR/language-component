@@ -94,6 +94,15 @@
 
             _errorResponse() {
                 const error = this.$.json.lastError;
+                this.dispatchEvent(new CustomEvent('language-request-error', {
+                    bubbles: false,
+                    composed: false,
+                    detail: {
+                        lang: this.lang,
+                        cache: this.locales,
+                        error
+                    }
+                }));
             }
         }
 
